@@ -4,6 +4,7 @@
 
 using System;
 using System.ComponentModel;
+using System.IO;
 using System.Windows.Forms;
 using Gma.System.MouseKeyHook;
 using System.Windows.Automation;
@@ -288,6 +289,11 @@ namespace Demo
                     {
                         // The object searched for by xpath doesn't exist anymore.
                         // What to do, what to do..
+                        //TODO
+                    }
+                    else
+                    {
+                        e.Result += "\n Object Name: " + foo.Current.Name;
                     }
                 }
             }
@@ -362,6 +368,22 @@ namespace Demo
         private void Log(string text)
         {
             if (IsDisposed) return;
+            using (StreamWriter w = File.AppendText("log.txt"))
+            {
+                //TODO: We should log active window too
+                //http://stackoverflow.com/questions/115868/how-do-i-get-the-title-of-the-current-active-window-using-c
+
+
+
+
+                // Let's use unix time, since we don't care about actual time, but more relative 
+                // time without dealing with all the time zone and DST gunk.
+                w.WriteLine("{0} Active Window: {1} {2}", (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds,
+                //DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                //DateTime.Now.ToLongTimeString(),DateTime.Now.ToLongDateString(),
+            text);
+            }
+            
             textBoxLog.AppendText(text);
             textBoxLog.ScrollToCaret();
         }
