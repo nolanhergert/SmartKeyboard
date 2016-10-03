@@ -2,6 +2,12 @@
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 
+
+/// <summary>
+/// For now, this is the thing doing the actual clicking / typing again
+/// </summary>
+
+
 public class Form1 : Form
 {
     [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]

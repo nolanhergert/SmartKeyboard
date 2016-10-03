@@ -10,7 +10,8 @@ using Gma.System.MouseKeyHook;
 using System.Windows.Automation;
 using System.Threading;
 using Gma.System.MouseKeyHook.Implementation;
-
+using System.Text;
+using System.Runtime.InteropServices;
 
 namespace Demo
 {
@@ -114,7 +115,16 @@ namespace Demo
             Log(string.Format("MouseDown \t\t {0} Suppressed\n", e.Button));
             e.Handled = true;
         }
-
+        /// <summary>
+        /// Need to do some things special with keyboard presses. Particularly
+        /// with Alt+Tab, we ignore all key down until key up (the final window switch)
+        /// 
+        /// 
+        /// Log the active window that the event took place on. Mouse clicks should 
+        /// be logged as well so we'll be keyboard pressing in the correct spot.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void OnKeyDown(object sender, KeyEventArgs e)
         {
             Log(string.Format("KeyDown  \t\t {0}\n", e.KeyCode));
@@ -135,6 +145,11 @@ namespace Demo
             labelMousePosition.Text = string.Format("x={0:0000}; y={1:0000}", e.X, e.Y);
         }
 
+        /// <summary>
+        /// Not needed for logging at this point. But planning on adding very 
+        /// soon. Really helpful...
+        /// 
+        /// </summary>
         private void ShowAllButtons()
         {
             // Show unique keyboard shortcuts, but then only save x and y for each
@@ -284,6 +299,8 @@ namespace Demo
                 e.Result = GetXPathFromElement(e.Argument as AutomationElement);
                 if (e.Result != null)
                 {
+                    // Prove that we can re-navigate the tree and locate the element
+                    // again.
                     AutomationElement foo = GetElementFromXPath((string)e.Result);
                     if (foo == null)
                     {
@@ -365,12 +382,43 @@ namespace Demo
             e.Handled = true;
         }
 
+        [DllImport("user32.dll")]
+        static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
+
+        private string GetActiveWindowTitle()
+        {
+            const int nChars = 256;
+            StringBuilder Buff = new StringBuilder(nChars);
+            IntPtr handle = GetForegroundWindow();
+
+            if (GetWindowText(handle, Buff, nChars) > 0)
+            {
+                return Buff.ToString();
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Format of log entry should be:
+        /// Timestamp;; type of press;; object clicked or keys pressed;;
+        /// 
+        /// If we run into issues later with parsing, use non-ascii characters
+        /// for non-keyboard events?
+        /// </summary>
+        /// <param name="text"></param>
         private void Log(string text)
         {
             if (IsDisposed) return;
+            string text2 = DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds +
+                        "Active Window: " + GetActiveWindowTitle() + text;
             using (StreamWriter w = File.AppendText("log.txt"))
             {
-                //TODO: We should log active window too
+                //TODO: We should also log active window of keyboard presses to make 
+                // things a little simpler in reproducing.
+                // We are logging the xPath of clicks, which includes the parent window
                 //http://stackoverflow.com/questions/115868/how-do-i-get-the-title-of-the-current-active-window-using-c
 
 
@@ -378,13 +426,16 @@ namespace Demo
 
                 // Let's use unix time, since we don't care about actual time, but more relative 
                 // time without dealing with all the time zone and DST gunk.
-                w.WriteLine("{0} Active Window: {1} {2}", (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds,
+                w.WriteLine(text2);
+                /*"{0} Active Window: {1} {2}", (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds,
                 //DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                 //DateTime.Now.ToLongTimeString(),DateTime.Now.ToLongDateString(),
+                GetActiveWindowTitle(),
             text);
+            */
             }
             
-            textBoxLog.AppendText(text);
+            textBoxLog.AppendText(text2);
             textBoxLog.ScrollToCaret();
         }
 
