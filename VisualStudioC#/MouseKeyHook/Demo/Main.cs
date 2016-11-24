@@ -46,6 +46,30 @@ namespace Demo
             Subscribe(Hook.GlobalEvents());
         }
 
+        /*
+        // I want to subscribe and handle all events in less code, is that possible?
+        // 
+        private void Subscribe(IKeyboardMouseEvents events)
+        {
+            
+            
+            // Subscribe to 
+            for ev in events:
+                ev += Foo;
+        }
+
+        // Won't really work because args is different. But we can at 
+        // least call the same print function
+        private void Foo(object sender, args e)
+        {
+            // Which event occurred?!?!
+
+            // Print out event name. Make it human readable, but compress
+            // when we are done. 
+            event.ToString()
+        }
+        */
+
         private void Subscribe(IKeyboardMouseEvents events)
         {
             m_Events = events;
